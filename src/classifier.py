@@ -1,4 +1,3 @@
-print("Classifier file is running")
 import os
 import json
 from dotenv import load_dotenv
@@ -10,29 +9,41 @@ client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
-
 def classify_persona(user_message):
 
     prompt = f"""
-    Classify the user into ONE category.
+You are a customer persona classifier.
 
-    Categories:
-    1. Technical Expert
-    2. Frustrated User
-    3. Business Executive
+Classify the user into exactly one category:
 
-    Return JSON format only.
+1. Technical Expert
+2. Frustrated User
+3. Business Executive
 
-    User Message:
-    {user_message}
-    """
+Return ONLY valid JSON.
+
+Format:
+{{
+    "persona": "",
+    "confidence": 0.0
+}}
+
+User Message:
+{user_message}
+"""
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt
     )
 
-    return response.text
+    try:
+        return json.loads(response.text)
+    except:
+        return {
+            "persona": "Unknown",
+            "confidence": 0.0
+        }
 
 
 if __name__ == "__main__":
@@ -41,4 +52,8 @@ if __name__ == "__main__":
 
     result = classify_persona(msg)
 
-    print(result)
+    print("\nDetected Persona:")
+    print(result["persona"])
+
+    print("Confidence:")
+    print(result["confidence"])
